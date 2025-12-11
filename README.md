@@ -24,3 +24,4 @@ Clone the repo:
 git clone git@github.com:codewithsadee/cozynest.git
 cd cozynest
 Open index.html in your browser No build tools needed – just open and go!# Ecommerce-land-page
+Add files like soo that of factor soo many build ,technology terminals too ecommerce login page of render of Java script too needed and all values soo called full responsive terminals too added 
