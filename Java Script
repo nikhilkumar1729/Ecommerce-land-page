@@ -1,0 +1,69 @@
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+const app = express();
+app.use(express.json());
+
+
+const users = [];
+const SECRET_KEY = "your_super_secret_key";
+
+
+app.post('/register', async (req, res) => {
+    try {
+        // 1. Hash the password so it's unreadable
+        const hashedPassword = await bcrypt.hash(req.body.password, 10);
+        
+        const newUser = { 
+            username: req.body.username, 
+            password: hashedPassword 
+        };
+        
+        users.push(newUser);
+        res.status(201).send("User registered successfully!");
+    } catch {
+        res.status(500).send("Error creating user.");
+    }
+});
+
+// --- LOGIN ROUTE ---
+app.post('/login', async (req, res) => {
+    const user = users.find(u => u.username === req.body.username);
+    
+    if (user == null) return res.status(400).send('User not found');
+
+    try {
+        // 2. Compare the typed password with the hashed password
+        if (await bcrypt.compare(req.body.password, user.password)) {
+            // 3. Create a JWT Token (like a digital "VIP pass")
+            const accessToken = jwt.sign({ name: user.username }, SECRET_KEY);
+            res.json({ accessToken: accessToken });
+        } else {
+            res.send('Invalid password');
+        }
+    } catch {
+        res.status(500).send();
+    }
+});
+
+// --- PROTECTED ROUTE (Middleware) ---
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (token == null) return res.sendStatus(401);
+
+    jwt.verify(token, SECRET_KEY, (err, user) => {
+        if (err) return res.sendStatus(403);
+        req.user = user;
+        next();
+    });
+}
+
+// Only logged-in users can see this
+app.get('/dashboard', authenticateToken, (req, res) => {
+    res.send(`Welcome to your dashboard, ${req.user.name}!`);
+});
+
+app.listen(3000, () => console.log('Server running on port 3000'));
